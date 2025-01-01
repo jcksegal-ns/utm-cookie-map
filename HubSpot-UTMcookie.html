@@ -1,9 +1,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/URI.js/1.19.4/URI.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"></script>
 <script>
+// Remove all console.log() events after testing
 (function() {
     function setUTMDataCookie() {
-        var expirationDays = 7;
+		// Set the number of days until the cookie expires. Keep this set to 'null' for session-only storage.
+        var expirationDays = null;
 
         // Parse query parameters from the current URL
         if (URI(window.location.href).query!=null) {
@@ -46,17 +48,24 @@
 				// List of form field names (which match cookie keys)
 				var fields = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'referrer'];
 
-				// Loop through the field names and populate corresponding form inputs
+				// Loop through the field names and populate corresponding form inputs 
 				fields.forEach(function(key) {
-					// Select the input field with the corresponding name attribute
-					var formElement = document.querySelector("input[name='" + key + "']");
 
+					// Check if the HubSpot form is in an iframe, then select the input field with the corresponding name attribute
+					if (document.getElementById("hs-form-iframe-0")) {
+						var formElement = document.getElementById("hs-form-iframe-0").contentDocument.querySelector("input[name='" + key + "']");
+					} else {
+						var formElement = document.querySelector("input[name='" + key + "']");
+					}
 					if (formElement) {
 						// Populate the form field value if the key exists in the marketing data
 						formElement.value = utmData[key] || '';
+						// Remove after testing
+						console.log(key+" field filled");
 					} else {
 						// Log a message if the form field is not found
-						console.log("Form field not found or no value available in cookie.");
+						// Remove after testing
+						console.log(key+" field not found");
 					}
 				});
 			}
