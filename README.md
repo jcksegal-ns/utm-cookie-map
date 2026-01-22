@@ -2,8 +2,8 @@
 
 Tiny, copy‑pasteable HTML snippets that persist UTM and referrer data in a cookie (`utmData`) and inject those values into hidden fields on **HubSpot** or **Marketo** forms.
 
-* HubSpot snippet: [`HubSpot-UTMcookie.html`](https://github.com/jcksegal-ns/utm-cookie-map/blob/main/HubSpot-UTMcookie.html)
-* Marketo snippet: [`Marketo-UTMcookie.html`](https://github.com/jcksegal-ns/utm-cookie-map/blob/main/Marketo-UTMcookie.html)
+* HubSpot: [`.js`](https://github.com/jcksegal-ns/utm-cookie-map/blob/main/HubSpot-UTMcookie.js) (CDN/self-hosted) · [`.html`](https://github.com/jcksegal-ns/utm-cookie-map/blob/main/HubSpot-UTMcookie.html) (GTM)
+* Marketo: [`.js`](https://github.com/jcksegal-ns/utm-cookie-map/blob/main/Marketo-UTMcookie.js) (CDN/self-hosted) · [`.html`](https://github.com/jcksegal-ns/utm-cookie-map/blob/main/Marketo-UTMcookie.html) (GTM)
 
 **Zero dependencies** · **ES5 compatible** · **GTM ready**
 
@@ -99,20 +99,30 @@ For additional cookies: `ajs_anonymous_id`, `li_fat_id`, `gcl_aw`, `fbp`, `fbc`,
 
 ### 2) Include the snippet
 
-**Google Tag Manager (recommended)**
+**Via CDN (easiest)**
+
+```html
+<!-- HubSpot -->
+<script src="https://cdn.jsdelivr.net/gh/jcksegal-ns/utm-cookie-map@main/HubSpot-UTMcookie.js"></script>
+
+<!-- Marketo -->
+<script src="https://cdn.jsdelivr.net/gh/jcksegal-ns/utm-cookie-map@main/Marketo-UTMcookie.js"></script>
+```
+
+**Google Tag Manager**
 
 1. Create a new Custom HTML tag
-2. Copy the entire contents of the snippet file
+2. Copy the entire contents of the `.html` snippet file (includes `<script>` tags)
 3. Set trigger to "All Pages" or your preferred page view trigger
 
 The snippet uses event listeners to detect forms, so it works regardless of whether it fires before or after the form loads.
 
-**Direct include**
+**Self-hosted**
 
 ```html
-<script src="/path/to/HubSpot-UTMcookie.html"></script>
+<script src="/path/to/HubSpot-UTMcookie.js"></script>
 <!-- or -->
-<script src="/path/to/Marketo-UTMcookie.html"></script>
+<script src="/path/to/Marketo-UTMcookie.js"></script>
 ```
 
 ### 3) Test
