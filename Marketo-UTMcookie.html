@@ -1,63 +1,94 @@
-<script src="https://cdnjs.cloudflare.com/ajax/libs/URI.js/1.19.4/URI.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"></script>
 <script>
 (function() {
+    function getCookie(name) {
+        var nameEQ = name + '=';
+        var ca = document.cookie.split(';');
+        for (var i = 0; i < ca.length; i++) {
+            var c = ca[i];
+            while (c.charAt(0) === ' ') c = c.substring(1);
+            if (c.indexOf(nameEQ) === 0) return decodeURIComponent(c.substring(nameEQ.length));
+        }
+        return null;
+    }
+
+    function setCookie(name, value, days) {
+        var expires = '';
+        if (days) {
+            var date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            expires = '; expires=' + date.toUTCString();
+        }
+        document.cookie = name + '=' + encodeURIComponent(value) + expires + '; path=/';
+    }
+
+    function getQueryParams() {
+        var params = {};
+        var queryString = window.location.search.substring(1);
+        if (!queryString) return params;
+
+        var pairs = queryString.split('&');
+        for (var i = 0; i < pairs.length; i++) {
+            var pair = pairs[i].split('=');
+            var key = decodeURIComponent(pair[0]);
+            var value = pair.length > 1 ? decodeURIComponent(pair[1].replace(/\+/g, ' ')) : '';
+            params[key] = value;
+        }
+        return params;
+    }
+
     function setUTMDataCookie() {
         var expirationDays = 7;
 
         // Parse query parameters from the current URL
-        if (URI(window.location.href).query!=null) {
-            var queryParams = new URI(window.location.href).query(true);
-            var utmData = {};
+        var queryParams = getQueryParams();
+        var utmData = {};
 
-            // Extract UTM parameters from the URL and add them to utmData
-            ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'].forEach(function(key) {
-                if (queryParams[key]) {
-                    utmData[key] = queryParams[key];
-                }
-            });
-
-            // Include the referrer URL in the marketing data
-            utmData.referrer = document.referrer || '';
-
-            // Set a cookie named 'utmData' with the marketing data if it doesn't already exist
-            if (!Cookies.get('utmData')) {
-                Cookies.set('utmData', JSON.stringify(utmData), { expires: expirationDays });
+        // Extract UTM parameters from the URL and add them to utmData
+        ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'].forEach(function(key) {
+            if (queryParams[key]) {
+                utmData[key] = queryParams[key];
             }
-        }        
+        });
+
+        // Include the referrer URL in the marketing data
+        utmData.referrer = document.referrer || '';
+
+        // Set a cookie named 'utmData' with the marketing data if it doesn't already exist
+        if (!getCookie('utmData')) {
+            setCookie('utmData', JSON.stringify(utmData), expirationDays);
+        }
     }
     // Call the function to set the marketing data cookie
     setUTMDataCookie();
 
-    // Transfer UTM Cookie data to Marketo Form
-    function doOrQueueFormsStuff() {
-      if (typeof MktoForms2 != "object") {
-        document.addEventListener("load", doOrQueueFormsStuff, true);
-      } else if (!doOrQueueFormsStuff.done) {
-        document.removeEventListener("load", doOrQueueFormsStuff, true);
-        doOrQueueFormsStuff.done = true;
-
-        /* 
-         now you can load form(s), add custom behaviors, 
-         and inject other scripts that require MktoForms2
-        */
-        MktoForms2.whenReady(function (form) {
-            // code inside this function will execute when `MktoForms2` has
-            // determined it's fully loaded.
-            var utmData = Cookies.get('utmData') ? JSON.parse(Cookies.get('utmData')) : {};
-            console.log(form.vals())
-            form.vals({
-                'UTM_Campaign__c':utmData['utm_campaign'] || '',
-                'UTM_Medium__c':utmData['utm_medium'] || '',
-                'UTM_Source__c':utmData['utm_source'] || '',
-                'UTM_Content__c':utmData['utm_content'] || '',
-                'UTM_Term__c':utmData['utm_term'] || '',
-                'referrer':utmData['referrer'] || ''
-            })
-            console.log(form.vals())
-        })
-      }
+    function getUTMData() {
+        var cookie = getCookie('utmData');
+        return cookie ? JSON.parse(cookie) : null;
     }
-    doOrQueueFormsStuff();
+
+    function populateMarketoForm(form) {
+        var utmData = getUTMData();
+        if (!utmData) return;
+
+        form.vals({
+            'UTM_Campaign__c': utmData['utm_campaign'] || '',
+            'UTM_Medium__c': utmData['utm_medium'] || '',
+            'UTM_Source__c': utmData['utm_source'] || '',
+            'UTM_Content__c': utmData['utm_content'] || '',
+            'UTM_Term__c': utmData['utm_term'] || '',
+            'referrer': utmData['referrer'] || ''
+        });
+    }
+
+    function initMarketoForms() {
+        if (typeof MktoForms2 !== 'object') {
+            document.addEventListener('load', initMarketoForms, true);
+        } else if (!initMarketoForms.done) {
+            document.removeEventListener('load', initMarketoForms, true);
+            initMarketoForms.done = true;
+            MktoForms2.whenReady(populateMarketoForm);
+        }
+    }
+    initMarketoForms();
 })();
 </script>

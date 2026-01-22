@@ -1,84 +1,126 @@
-<script src="https://cdnjs.cloudflare.com/ajax/libs/URI.js/1.19.4/URI.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"></script>
 <script>
-	// Remove all console.log() events after testing
 	(function () {
+		function getCookie(name) {
+			var nameEQ = name + '=';
+			var ca = document.cookie.split(';');
+			for (var i = 0; i < ca.length; i++) {
+				var c = ca[i];
+				while (c.charAt(0) === ' ') c = c.substring(1);
+				if (c.indexOf(nameEQ) === 0) return decodeURIComponent(c.substring(nameEQ.length));
+			}
+			return null;
+		}
+
+		function setCookie(name, value, days) {
+			var expires = '';
+			if (days) {
+				var date = new Date();
+				date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+				expires = '; expires=' + date.toUTCString();
+			}
+			document.cookie = name + '=' + encodeURIComponent(value) + expires + '; path=/';
+		}
+
+		function getQueryParams() {
+			var params = {};
+			var queryString = window.location.search.substring(1);
+			if (!queryString) return params;
+
+			var pairs = queryString.split('&');
+			for (var i = 0; i < pairs.length; i++) {
+				var pair = pairs[i].split('=');
+				var key = decodeURIComponent(pair[0]);
+				var value = pair.length > 1 ? decodeURIComponent(pair[1].replace(/\+/g, ' ')) : '';
+				params[key] = value;
+			}
+			return params;
+		}
+
 		function setUTMDataCookie() {
-			// Set the number of days until the cookie expires. Keep this set to 'null' for session-only storage.
-			var expirationDays = null;
+			// Set the number of days until the cookie expires
+			var expirationDays = 7;
 
 			// Parse query parameters from the current URL
-			if (URI(window.location.href).query != null) {
-				var queryParams = new URI(window.location.href).query(true);
-				var utmData = {};
+			var queryParams = getQueryParams();
+			var utmData = {};
 
-				// Extract UTM parameters from the URL and add them to utmData
-				['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'].forEach(function (key) {
-					if (queryParams[key]) {
-						utmData[key] = queryParams[key];
-					}
-				});
-
-				// Include the referrer URL in the marketing data
-				utmData.referrer = document.referrer || '';
-
-				// Set a cookie named 'utmData' with the marketing data if it doesn't already exist
-				if (!Cookies.get('utmData')) {
-					Cookies.set('utmData', JSON.stringify(utmData), { expires: expirationDays });
+			// Extract UTM parameters from the URL and add them to utmData
+			['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'].forEach(function (key) {
+				if (queryParams[key]) {
+					utmData[key] = queryParams[key];
 				}
+			});
+
+			// Include the referrer URL in the marketing data
+			utmData.referrer = document.referrer || '';
+
+			// Set a cookie named 'utmData' with the marketing data if it doesn't already exist
+			if (!getCookie('utmData')) {
+				setCookie('utmData', JSON.stringify(utmData), expirationDays);
 			}
 		}
 		// Call the function to set the marketing data cookie
 		setUTMDataCookie();
 
-		function doOrQueueFormsStuffV4() {
-			if (typeof HubSpotFormsV4 != "object" || typeof HubSpotForms != "object") {
-				document.addEventListener("load", doOrQueueFormsStuffV4, true);
-			} else if (!doOrQueueFormsStuffV4.done) {
-				document.removeEventListener("load", doOrQueueFormsStuffV4, true);
-				doOrQueueFormsStuffV4.done = true;
-				// Retrieve the marketingData cookie, if it exists
-				var cookie = Cookies.get('utmData');
+		var utmFields = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'referrer'];
 
-				if (cookie) {
-					// Parse the cookie to retrieve the marketing data
-					var utmData = JSON.parse(cookie);
+		function getUTMData() {
+			var cookie = getCookie('utmData');
+			return cookie ? JSON.parse(cookie) : null;
+		}
 
-					if (HubSpotFormsV4) {
-						var form = HubSpotFormsV4.getForms()[0]
+		// Populate a V4 form instance
+		function populateV4Form(form) {
+			var utmData = getUTMData();
+			if (!utmData) return;
 
-						var formValues = form.getFormFieldValues()
-						formValues.then(function (result) {
-							for (var key in result) {
-								var name = result[key].name
-								utmDataName = name.split("/")[1]
-								if (utmData[utmDataName]) {
-									console.log(utmDataName + " found")
-									form.setFieldValue(name, utmData[utmDataName])
-								}
-							}
-						});
-					}
-					if (HubSpotForms) {
-						var fields = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'referrer'];
-						fields.forEach(function (key) {
-							// Check if the HubSpot form is in an iframe, then select the input field with the corresponding name attribute
-							var formElement = document.querySelector("input[name='" + key + "']");
-							if (formElement) {
-								// Populate the form field value if the key exists in the marketing data
-								formElement.value = utmData[key] || '';
-								// Remove after testing
-								console.log(key + " field filled");
-							} else {
-								// Log a message if the form field is not found
-								// Remove after testing
-								console.log(key + " field not found");
-							}
-						});
+			form.getFormFieldValues().then(function (result) {
+				for (var key in result) {
+					var name = result[key].name;
+					var utmDataName = name.split('/')[1];
+					if (utmData[utmDataName]) {
+						form.setFieldValue(name, utmData[utmDataName]);
 					}
 				}
-			}
+			});
 		}
-		doOrQueueFormsStuffV4();
+
+		// Populate legacy form via DOM
+		function populateLegacyForm(formEl) {
+			var utmData = getUTMData();
+			if (!utmData) return;
+
+			utmFields.forEach(function (key) {
+				var input = formEl ? formEl.querySelector("input[name='" + key + "']") : document.querySelector("input[name='" + key + "']");
+				if (input) {
+					input.value = utmData[key] || '';
+				}
+			});
+		}
+
+		// V4 Forms: Handle existing forms and listen for future forms
+		if (typeof HubSpotFormsV4 === 'object') {
+			HubSpotFormsV4.getForms().forEach(function (form) {
+				populateV4Form(form);
+			});
+		}
+		window.addEventListener('hs-form-event:on-ready', function (event) {
+			if (typeof HubSpotFormsV4 === 'object') {
+				var form = HubSpotFormsV4.getFormFromEvent(event);
+				if (form) {
+					populateV4Form(form);
+				}
+			}
+		});
+
+		// Legacy Forms: Handle existing forms and listen for future forms
+		populateLegacyForm(null);
+		window.addEventListener('message', function (event) {
+			if (event.data.type === 'hsFormCallback' && event.data.eventName === 'onFormReady') {
+				var formId = event.data.id;
+				var formEl = document.querySelector('form[data-form-id="' + formId + '"]');
+				populateLegacyForm(formEl);
+			}
+		});
 	})();
 </script>
