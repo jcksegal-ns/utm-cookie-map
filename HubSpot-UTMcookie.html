@@ -1,5 +1,45 @@
 <script>
 	(function () {
+		// =====================================================================
+		// CONFIGURATION - Modify settings in this section
+		// =====================================================================
+
+		// Cookie expiration in days
+		var expirationDays = 7;
+
+		// UTM parameters to capture from URL and their corresponding form field names
+		// Format: { 'url_param': 'form_field_name' }
+		var utmFieldMap = {
+			'utm_source': 'utm_source',
+			'utm_medium': 'utm_medium',
+			'utm_campaign': 'utm_campaign',
+			'utm_content': 'utm_content',
+			'utm_term': 'utm_term'
+		};
+
+		// Form field name for the referrer URL
+		var referrerField = 'referrer';
+
+		// Additional browser cookies to capture and map to form fields
+		// These capture advertising/analytics identifiers from other platforms
+		// Set a value to null or remove the line to disable that cookie
+		// Format: { 'cookie_name': 'form_field_name' }
+		var cookieFieldMap = {
+			'ajs_anonymous_id': 'ajs_anonymous_id',  // Segment anonymous ID
+			'li_fat_id': 'li_fat_id',                // LinkedIn click ID
+			'_gcl_aw': 'gcl_aw',                     // Google Ads click ID
+			'_fbp': 'fbp',                           // Facebook pixel browser ID
+			'_fbc': 'fbc'                            // Facebook click ID
+		};
+
+		// Set to true to capture Google Analytics Client ID from _ga cookie
+		var captureGAClientId = true;
+		var gaClientIdField = 'ga_client_id';
+
+		// =====================================================================
+		// DO NOT MODIFY BELOW THIS LINE
+		// =====================================================================
+
 		function getCookie(name) {
 			var nameEQ = name + '=';
 			var ca = document.cookie.split(';');
@@ -36,50 +76,117 @@
 			return params;
 		}
 
-		function setUTMDataCookie() {
-			// Set the number of days until the cookie expires
-			var expirationDays = 7;
+		function getGAClientId() {
+			var gaCookie = getCookie('_ga');
+			if (!gaCookie) return null;
+			// _ga format: GA1.1.1234567890.1234567890 - client ID is last two parts
+			var parts = gaCookie.split('.');
+			if (parts.length >= 4) {
+				return parts.slice(2).join('.');
+			}
+			return null;
+		}
 
-			// Parse query parameters from the current URL
+		function setUTMDataCookie() {
 			var queryParams = getQueryParams();
 			var utmData = {};
 
-			// Extract UTM parameters from the URL and add them to utmData
-			['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'].forEach(function (key) {
-				if (queryParams[key]) {
-					utmData[key] = queryParams[key];
+			// Extract UTM parameters from the URL
+			for (var param in utmFieldMap) {
+				if (utmFieldMap.hasOwnProperty(param) && queryParams[param]) {
+					utmData[utmFieldMap[param]] = queryParams[param];
 				}
-			});
+			}
 
-			// Include the referrer URL in the marketing data
-			utmData.referrer = document.referrer || '';
+			// Include the referrer URL
+			if (referrerField) {
+				utmData[referrerField] = document.referrer || '';
+			}
 
-			// Set a cookie named 'utmData' with the marketing data if it doesn't already exist
+			// Set cookie if it doesn't already exist
 			if (!getCookie('utmData')) {
 				setCookie('utmData', JSON.stringify(utmData), expirationDays);
 			}
 		}
-		// Call the function to set the marketing data cookie
 		setUTMDataCookie();
-
-		var utmFields = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'referrer'];
 
 		function getUTMData() {
 			var cookie = getCookie('utmData');
 			return cookie ? JSON.parse(cookie) : null;
 		}
 
+		function getAdditionalCookieData() {
+			var data = {};
+
+			// Capture mapped cookies
+			for (var cookieName in cookieFieldMap) {
+				if (cookieFieldMap.hasOwnProperty(cookieName) && cookieFieldMap[cookieName]) {
+					var value = getCookie(cookieName);
+					if (value) {
+						data[cookieFieldMap[cookieName]] = value;
+					}
+				}
+			}
+
+			// Capture GA Client ID
+			if (captureGAClientId && gaClientIdField) {
+				var gaClientId = getGAClientId();
+				if (gaClientId) {
+					data[gaClientIdField] = gaClientId;
+				}
+			}
+
+			return data;
+		}
+
+		function getAllFieldData() {
+			var utmData = getUTMData() || {};
+			var cookieData = getAdditionalCookieData();
+			// Merge UTM data with cookie data
+			for (var key in cookieData) {
+				if (cookieData.hasOwnProperty(key)) {
+					utmData[key] = cookieData[key];
+				}
+			}
+			return utmData;
+		}
+
+		function getAllFieldNames() {
+			var fields = [];
+			// Add UTM field names
+			for (var param in utmFieldMap) {
+				if (utmFieldMap.hasOwnProperty(param)) {
+					fields.push(utmFieldMap[param]);
+				}
+			}
+			// Add referrer field
+			if (referrerField) {
+				fields.push(referrerField);
+			}
+			// Add cookie field names
+			for (var cookieName in cookieFieldMap) {
+				if (cookieFieldMap.hasOwnProperty(cookieName) && cookieFieldMap[cookieName]) {
+					fields.push(cookieFieldMap[cookieName]);
+				}
+			}
+			// Add GA Client ID field
+			if (captureGAClientId && gaClientIdField) {
+				fields.push(gaClientIdField);
+			}
+			return fields;
+		}
+
 		// Populate a V4 form instance
 		function populateV4Form(form) {
-			var utmData = getUTMData();
-			if (!utmData) return;
+			var fieldData = getAllFieldData();
+			if (!fieldData || Object.keys(fieldData).length === 0) return;
 
 			form.getFormFieldValues().then(function (result) {
 				for (var key in result) {
 					var name = result[key].name;
-					var utmDataName = name.split('/')[1];
-					if (utmData[utmDataName]) {
-						form.setFieldValue(name, utmData[utmDataName]);
+					var fieldName = name.split('/')[1];
+					if (fieldData[fieldName]) {
+						form.setFieldValue(name, fieldData[fieldName]);
 					}
 				}
 			});
@@ -87,13 +194,14 @@
 
 		// Populate legacy form via DOM
 		function populateLegacyForm(formEl) {
-			var utmData = getUTMData();
-			if (!utmData) return;
+			var fieldData = getAllFieldData();
+			if (!fieldData || Object.keys(fieldData).length === 0) return;
 
-			utmFields.forEach(function (key) {
-				var input = formEl ? formEl.querySelector("input[name='" + key + "']") : document.querySelector("input[name='" + key + "']");
-				if (input) {
-					input.value = utmData[key] || '';
+			var fields = getAllFieldNames();
+			fields.forEach(function (fieldName) {
+				var input = formEl ? formEl.querySelector("input[name='" + fieldName + "']") : document.querySelector("input[name='" + fieldName + "']");
+				if (input && fieldData[fieldName]) {
+					input.value = fieldData[fieldName];
 				}
 			});
 		}

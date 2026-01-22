@@ -10,8 +10,13 @@ This repository contains standalone JavaScript snippets that capture UTM paramet
 
 - **Two independent snippets**: `HubSpot-UTMcookie.html` and `Marketo-UTMcookie.html` - each is self-contained and platform-specific
 - **No external dependencies**: Pure ES5 JavaScript, GTM-compatible
-- **Cookie name**: `utmData` (JSON-stringified object)
-- **UTM keys tracked**: `utm_source`, `utm_medium`, `utm_campaign`, `utm_content`, `utm_term`, plus `referrer`
+- **Cookie name**: `utmData` (JSON-stringified object storing UTM params and referrer)
+- **Configuration section**: All user-configurable settings are at the top of each snippet, above a "DO NOT MODIFY BELOW THIS LINE" comment
+
+### Data captured
+- UTM parameters: `utm_source`, `utm_medium`, `utm_campaign`, `utm_content`, `utm_term`
+- Referrer URL
+- Additional platform cookies (configurable): Segment (`ajs_anonymous_id`), LinkedIn (`li_fat_id`), Google Ads (`_gcl_aw`), Facebook (`_fbp`, `_fbc`), GA4 Client ID (`_ga`)
 
 ## Key Implementation Details
 
@@ -30,10 +35,13 @@ This repository contains standalone JavaScript snippets that capture UTM paramet
 
 ## Customization Points
 
-When modifying these snippets:
-- **Cookie expiration**: Change `expirationDays` variable at top of each snippet
-- **Field mapping**: Edit the field name arrays/objects to match your MAP property API names
-- **Additional parameters**: Add keys to the forEach loop that extracts URL params (e.g., `gclid`, `fbclid`)
+All configuration is in the top section of each snippet (above "DO NOT MODIFY BELOW THIS LINE"):
+
+- **`expirationDays`**: Cookie expiration in days (default: 7)
+- **`utmFieldMap`**: Maps URL parameters to form field names
+- **`referrerField`**: Form field name for the referrer URL
+- **`cookieFieldMap`**: Maps browser cookies (ad platform IDs) to form field names. Set value to `null` to disable.
+- **`captureGAClientId`** / **`gaClientIdField`**: Toggle and field name for GA4 Client ID
 
 ## Testing
 

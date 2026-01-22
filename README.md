@@ -19,7 +19,7 @@ Attribution dies when a visitor navigates, returns, or clears query strings. Thi
 
 ## What it captures
 
-By default the snippet looks for common UTM keys and basic referrer context. Typical keys include:
+**UTM parameters** (from URL query string):
 
 * `utm_source`
 * `utm_medium`
@@ -28,7 +28,16 @@ By default the snippet looks for common UTM keys and basic referrer context. Typ
 * `utm_content`
 * Original referrer URL
 
-> You can extend or rename mappings to match your property names; see **Customize field mapping** below.
+**Additional platform cookies** (read from browser):
+
+* `ajs_anonymous_id` — Segment anonymous ID
+* `li_fat_id` — LinkedIn click ID
+* `_gcl_aw` — Google Ads click ID
+* `_fbp` — Facebook pixel browser ID
+* `_fbc` — Facebook click ID
+* `_ga` — Google Analytics Client ID (parsed)
+
+> All field mappings are configurable in the snippet's configuration section.
 
 ---
 
@@ -69,22 +78,24 @@ Create hidden fields in your HubSpot form with these property names:
 * `utm_content`
 * `referrer`
 
+For additional cookies: `ajs_anonymous_id`, `li_fat_id`, `gcl_aw`, `fbp`, `fbc`, `ga_client_id`
+
 The snippet handles both V4 forms (via API) and legacy forms (via DOM).
 
 **Marketo form field examples**
 
 The snippet expects Salesforce-style API names by default:
 
-```html
-<input type="hidden" name="UTM_Source__c">
-<input type="hidden" name="UTM_Medium__c">
-<input type="hidden" name="UTM_Campaign__c">
-<input type="hidden" name="UTM_Term__c">
-<input type="hidden" name="UTM_Content__c">
-<input type="hidden" name="referrer">
-```
+* `UTM_Source__c`
+* `UTM_Medium__c`
+* `UTM_Campaign__c`
+* `UTM_Term__c`
+* `UTM_Content__c`
+* `referrer`
 
-> Edit `populateMarketoForm()` in the snippet to match your actual Marketo field API names.
+For additional cookies: `ajs_anonymous_id`, `li_fat_id`, `gcl_aw`, `fbp`, `fbc`, `ga_client_id`
+
+> Edit `utmFieldMap` and `cookieFieldMap` in the configuration section to match your Marketo field API names.
 
 ### 2) Include the snippet
 
@@ -112,15 +123,22 @@ The snippet uses event listeners to detect forms, so it works regardless of whet
 
 ---
 
-## Customize field mapping
+## Configuration
 
-If your property names differ from the UTM keys, edit the mapping section in the snippet to define `URL parameter → form field` pairs. Typical customizations:
+All settings are in the **CONFIGURATION** section at the top of each snippet (above "DO NOT MODIFY BELOW THIS LINE").
 
-* Rename `utm_source` to `first_touch_source` (or any field you track)
-* Add `gclid`, `fbclid`, or custom parameters
-* Map `document.referrer` into a custom `original_referrer` field
+| Variable | Purpose |
+|----------|---------|
+| `expirationDays` | Cookie expiration in days (default: 7) |
+| `utmFieldMap` | Maps URL params to form field names |
+| `referrerField` | Form field name for referrer URL |
+| `cookieFieldMap` | Maps browser cookies to form field names |
+| `captureGAClientId` | Enable/disable GA Client ID capture |
+| `gaClientIdField` | Form field name for GA Client ID |
 
-> Keep the cookie key (`utmData`) unless you have a collision with another script.
+**To disable a cookie**: Set its value to `null` in `cookieFieldMap`, or remove the line.
+
+**To add a custom parameter**: Add an entry to `utmFieldMap` (for URL params) or `cookieFieldMap` (for cookies).
 
 ---
 
@@ -145,10 +163,11 @@ If your property names differ from the UTM keys, edit the mapping section in the
 
 ## Troubleshooting
 
-* **Fields are blank**: Ensure hidden fields exist with `name` attributes matching the snippet's field mapping.
+* **Fields are blank**: Ensure hidden fields exist with `name` attributes matching the field names in `utmFieldMap` and `cookieFieldMap`.
 * **UTMs disappear after navigation**: Check devtools → Application → Cookies for `utmData`.
-* **HubSpot V4 fields not populating**: V4 field names use format `namespace/fieldname`. The snippet extracts the part after the `/` to match against UTM keys.
-* **Marketo fields not populating**: Verify your Marketo field API names match those in `populateMarketoForm()`.
+* **HubSpot V4 fields not populating**: V4 field names use format `namespace/fieldname`. The snippet extracts the part after the `/` to match.
+* **Marketo fields not populating**: Verify your Marketo field API names match those in the configuration section.
+* **Additional cookies not captured**: Ensure the third-party script (GA, Facebook, etc.) has set the cookie before this snippet runs.
 * **Consent banners**: If you gate cookies behind consent, fire this script only after marketing consent is granted.
 
 ---
