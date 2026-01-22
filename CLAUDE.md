@@ -8,7 +8,10 @@ This repository contains standalone JavaScript snippets that capture UTM paramet
 
 ## Architecture
 
-- **Two independent snippets**: `HubSpot-UTMcookie.html` and `Marketo-UTMcookie.html` - each is self-contained and platform-specific
+- **Two independent snippets** for HubSpot and Marketo, each available in two formats:
+  - `.js` files: For CDN hosting or `<script src>` loading
+  - `.html` files: For GTM Custom HTML tags (includes `<script>` wrapper)
+- **CDN hosting**: Files served via jsDelivr at `https://cdn.jsdelivr.net/gh/jcksegal-ns/utm-cookie-map@main/`
 - **No external dependencies**: Pure ES5 JavaScript, GTM-compatible
 - **Cookie name**: `utmData` (JSON-stringified object storing UTM params and referrer)
 - **Configuration section**: All user-configurable settings are at the top of each snippet, above a "DO NOT MODIFY BELOW THIS LINE" comment
