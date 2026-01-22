@@ -1,9 +1,11 @@
 # UTM Cookie for MAPs
 
-Tiny, copy‑pasteable HTML snippets that persist UTM and referrer data in a cookie (`utmData`) and inject those values into hidden fields on **HubSpot** or **Marketo** forms on page load.
+Tiny, copy‑pasteable HTML snippets that persist UTM and referrer data in a cookie (`utmData`) and inject those values into hidden fields on **HubSpot** or **Marketo** forms.
 
 * HubSpot snippet: [`HubSpot-UTMcookie.html`](https://github.com/jcksegal-ns/utm-cookie-map/blob/main/HubSpot-UTMcookie.html)
 * Marketo snippet: [`Marketo-UTMcookie.html`](https://github.com/jcksegal-ns/utm-cookie-map/blob/main/Marketo-UTMcookie.html)
+
+**Zero dependencies** · **ES5 compatible** · **GTM ready**
 
 > If you only need one MAP, include just that file. If you use both on different pages, include the matching snippet per page.
 
@@ -33,11 +35,20 @@ By default the snippet looks for common UTM keys and basic referrer context. Typ
 ## How it works
 
 1. **Parse URL**: On page load, read the current URL for UTM parameters.
-2. **Persist**: Store values in a cookie named `utmData` so they survive page changes.
-3. **Detect a form**: When a HubSpot or Marketo form is present, the script finds matching **hidden fields**.
-4. **Populate**: It fills those fields with values from `utmData`.
+2. **Persist**: Store values in a cookie named `utmData` (7-day expiration) so they survive page changes.
+3. **Detect forms**: Listen for form ready events to catch both existing and dynamically loaded forms.
+4. **Populate**: Fill hidden fields with values from `utmData`.
 
-No external dependencies. Intended to work in Tag Managers or inline in the page `<head>`/`<body>`.
+### HubSpot form detection
+
+* **V4 forms**: Uses `hs-form-event:on-ready` event + `HubSpotFormsV4` API
+* **Legacy forms**: Uses `hsFormCallback` message events + DOM selection
+
+### Marketo form detection
+
+* Uses `MktoForms2.whenReady()` which handles both existing and future forms
+
+Pure ES5 JavaScript with no external dependencies. Works in Google Tag Manager Custom HTML tags or inline in the page.
 
 ---
 
@@ -49,43 +60,49 @@ Create properties and add hidden inputs for each value you want to capture. Exam
 
 **HubSpot form field examples**
 
-```html
-<!-- Adjust `name` to your HubSpot property API names -->
-<input type="hidden" name="utm_source">
-<input type="hidden" name="utm_medium">
-<input type="hidden" name="utm_campaign">
-<input type="hidden" name="utm_term">
-<input type="hidden" name="utm_content">
-<input type="hidden" name="original_referrer">
-```
+Create hidden fields in your HubSpot form with these property names:
+
+* `utm_source`
+* `utm_medium`
+* `utm_campaign`
+* `utm_term`
+* `utm_content`
+* `referrer`
+
+The snippet handles both V4 forms (via API) and legacy forms (via DOM).
 
 **Marketo form field examples**
 
+The snippet expects Salesforce-style API names by default:
+
 ```html
-<!-- Adjust `name` to your Marketo field names (API names) -->
-<input type="hidden" name="utm_source">
-<input type="hidden" name="utm_medium">
-<input type="hidden" name="utm_campaign">
-<input type="hidden" name="utm_term">
-<input type="hidden" name="utm_content">
-<input type="hidden" name="original_referrer__c">
+<input type="hidden" name="UTM_Source__c">
+<input type="hidden" name="UTM_Medium__c">
+<input type="hidden" name="UTM_Campaign__c">
+<input type="hidden" name="UTM_Term__c">
+<input type="hidden" name="UTM_Content__c">
+<input type="hidden" name="referrer">
 ```
 
-> Use your actual property API names. Field labels can differ.
+> Edit `populateMarketoForm()` in the snippet to match your actual Marketo field API names.
 
 ### 2) Include the snippet
 
-Place **one** of the provided files on the page *before* the form renders, or deploy via your tag manager with a trigger that fires on page view:
+**Google Tag Manager (recommended)**
+
+1. Create a new Custom HTML tag
+2. Copy the entire contents of the snippet file
+3. Set trigger to "All Pages" or your preferred page view trigger
+
+The snippet uses event listeners to detect forms, so it works regardless of whether it fires before or after the form loads.
+
+**Direct include**
 
 ```html
-<!-- HubSpot -->
 <script src="/path/to/HubSpot-UTMcookie.html"></script>
-
-<!-- Marketo -->
+<!-- or -->
 <script src="/path/to/Marketo-UTMcookie.html"></script>
 ```
-
-If you prefer inline, copy the file contents into an HTML tag in your CMS or GTM Custom HTML tag.
 
 ### 3) Test
 
@@ -111,8 +128,8 @@ If your property names differ from the UTM keys, edit the mapping section in the
 
 * **Name**: `utmData`
 * **Scope**: First‑party. Domain and path follow your page context.
-* **Lifetime**: Set in the snippet. Adjust to your policy.
-* **Contents**: Key‑value pairs of captured parameters and referrer info.
+* **Lifetime**: 7 days by default. Change `expirationDays` in the snippet to adjust.
+* **Contents**: JSON-encoded object with UTM parameters and referrer.
 
 > Treat cookies carrying marketing attribution as personal data in many jurisdictions. See **Privacy & compliance**.
 
@@ -128,9 +145,10 @@ If your property names differ from the UTM keys, edit the mapping section in the
 
 ## Troubleshooting
 
-* **Fields are blank**: Ensure the hidden inputs exist and their `name` attributes match the expected property names.
-* **UTMs disappear after navigation**: Confirm the cookie is being set. Check devtools → Application → Cookies for `utmData`.
-* **Multiple forms on page**: Confirm the snippet targets the correct form API (HubSpot vs Marketo) and runs after the form library loads.
+* **Fields are blank**: Ensure hidden fields exist with `name` attributes matching the snippet's field mapping.
+* **UTMs disappear after navigation**: Check devtools → Application → Cookies for `utmData`.
+* **HubSpot V4 fields not populating**: V4 field names use format `namespace/fieldname`. The snippet extracts the part after the `/` to match against UTM keys.
+* **Marketo fields not populating**: Verify your Marketo field API names match those in `populateMarketoForm()`.
 * **Consent banners**: If you gate cookies behind consent, fire this script only after marketing consent is granted.
 
 ---
