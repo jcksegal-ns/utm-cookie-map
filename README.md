@@ -26,6 +26,7 @@ Attribution dies when a visitor navigates, returns, or clears query strings. Thi
 * `utm_campaign`
 * `utm_term`
 * `utm_content`
+* `msclkid` — Bing/Microsoft Ads click ID
 * Original referrer URL
 
 **Additional platform cookies** (read from browser):
@@ -76,6 +77,7 @@ Create hidden fields in your HubSpot form with these property names:
 * `utm_campaign`
 * `utm_term`
 * `utm_content`
+* `msclkid`
 * `referrer`
 
 For additional cookies: `ajs_anonymous_id`, `li_fat_id`, `gcl_aw`, `fbp`, `fbc`, `ga_client_id`
@@ -91,6 +93,7 @@ The snippet expects Salesforce-style API names by default:
 * `UTM_Campaign__c`
 * `UTM_Term__c`
 * `UTM_Content__c`
+* `MSCLKID__c`
 * `referrer`
 
 For additional cookies: `ajs_anonymous_id`, `li_fat_id`, `gcl_aw`, `fbp`, `fbc`, `ga_client_id`

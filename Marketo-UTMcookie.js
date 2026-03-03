@@ -13,7 +13,8 @@
         'utm_medium': 'UTM_Medium__c',
         'utm_campaign': 'UTM_Campaign__c',
         'utm_content': 'UTM_Content__c',
-        'utm_term': 'UTM_Term__c'
+        'utm_term': 'UTM_Term__c',
+        'msclkid': 'MSCLKID__c'            // Bing/Microsoft Ads click ID
     };
 
     // Marketo field name for the referrer URL
