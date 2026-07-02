@@ -9,6 +9,8 @@ Tiny, copy‑pasteable HTML snippets that persist UTM and referrer data in a coo
 
 > If you only need one MAP, include just that file. If you use both on different pages, include the matching snippet per page.
 
+> **HubSpot users:** The [Attribution Foundation bundle](https://app.netspinnr.com/library/) on NetSpinnr creates every HubSpot property this script writes to — with matching internal names, first-touch stamp workflows, and a hidden field set ready to add to any form. Deploy the bundle first, then install the snippet. See [Quick start](#quick-start) below.
+
 ---
 
 ## Why
@@ -64,27 +66,37 @@ Pure ES5 JavaScript with no external dependencies. Works in Google Tag Manager C
 
 ## Quick start
 
-### 1) Create hidden fields on your form
+### 1) Create the HubSpot properties (HubSpot only)
 
-Create properties and add hidden inputs for each value you want to capture. Examples:
+**Option A — one-click deploy (recommended)**
 
-**HubSpot form field examples**
+Deploy the [Attribution Foundation bundle](https://app.netspinnr.com/library/) from NetSpinnr. It creates all properties below with the correct internal names, plus five first-touch stamp workflows and a hidden field set you can drop onto any form. Skip the manual step and go straight to [step 2](#2-include-the-snippet).
 
-Create hidden fields in your HubSpot form with these property names:
+**Option B — manual**
 
-* `utm_source`
-* `utm_medium`
-* `utm_campaign`
-* `utm_term`
-* `utm_content`
-* `msclkid`
-* `referrer`
+Create HubSpot contact properties with these internal names:
 
-For additional cookies: `ajs_anonymous_id`, `li_fat_id`, `gcl_aw`, `fbp`, `fbc`, `ga_client_id`
+| What the script captures | HubSpot property internal name |
+|---|---|
+| `utm_source` | `utm_source` |
+| `utm_medium` | `utm_medium` |
+| `utm_campaign` | `utm_campaign` |
+| `utm_term` | `utm_term` |
+| `utm_content` | `utm_content` |
+| `msclkid` (Microsoft click ID) | `msclkid` |
+| Referrer URL | `referrer` |
+| `ajs_anonymous_id` (Segment) | `ajs_anonymous_id` |
+| `li_fat_id` (LinkedIn click ID) | `li_fat_id` |
+| `_gcl_aw` (Google Ads click ID) | `gcl_aw` |
+| `_fbp` (Facebook pixel ID) | `fbp` |
+| `_fbc` (Facebook click ID) | `fbc` |
+| `_ga` (GA Client ID) | `ga_client_id` |
+
+Then add each property as a hidden field on your form.
 
 The snippet handles both V4 forms (via API) and legacy forms (via DOM).
 
-**Marketo form field examples**
+**Marketo**
 
 The snippet expects Salesforce-style API names by default:
 
