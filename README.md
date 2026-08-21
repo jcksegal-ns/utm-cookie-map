@@ -70,7 +70,7 @@ Pure ES5 JavaScript with no external dependencies. Works in Google Tag Manager C
 
 **Option A — one-click deploy (recommended)**
 
-Deploy the [Attribution Foundation bundle](https://app.netspinnr.com/library/) from NetSpinnr. It creates all properties below with the correct internal names, plus five first-touch stamp workflows and a hidden field set you can drop onto any form. Skip the manual step and go straight to [step 2](#2-include-the-snippet).
+Deploy the [Attribution Foundation bundle](https://app.netspinnr.com/library/netspinner/attribution-foundation/) from Template Manager. It creates all properties below with the correct internal names, plus five first-touch stamp workflows. Skip the manual step and go straight to [step 2](#2-include-the-snippet).
 
 **Option B — manual**
 
