@@ -9,7 +9,7 @@ Tiny, copy‑pasteable HTML snippets that persist UTM and referrer data in a coo
 
 > If you only need one MAP, include just that file. If you use both on different pages, include the matching snippet per page.
 
-> **HubSpot users:** The [Attribution Foundation bundle](https://app.netspinnr.com/library/) on NetSpinnr creates every HubSpot property this script writes to — with matching internal names, first-touch stamp workflows, and a hidden field set ready to add to any form. Deploy the bundle first, then install the snippet. See [Quick start](#quick-start) below.
+> **HubSpot users:** The [Attribution Foundation bundle](https://app.netspinnr.com/library/netspinner/attribution-foundation/) on NetSpinnr creates every HubSpot property this script writes to — with matching internal names and first-touch stamp workflows. Deploy the bundle first, then install the snippet. See [Quick start](#quick-start) below.
 
 ---
 
