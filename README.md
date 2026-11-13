@@ -47,14 +47,14 @@ Attribution dies when a visitor navigates, returns, or clears query strings. Thi
 ## How it works
 
 1. **Parse URL**: On page load, read the current URL for UTM parameters.
-2. **Persist**: Store values in a cookie named `utmData` (7-day expiration) so they survive page changes.
+2. **Persist**: Store values in a cookie named `utmData` (session cookie by default) so they survive page changes.
 3. **Detect forms**: Listen for form ready events to catch both existing and dynamically loaded forms.
 4. **Populate**: Fill hidden fields with values from `utmData`.
 
 ### HubSpot form detection
 
 * **V4 forms**: Uses `hs-form-event:on-ready` event + `HubSpotFormsV4` API
-* **Legacy forms**: Uses `hsFormCallback` message events + DOM selection
+* **Legacy forms**: Uses `hsFormCallback` message events + DOM selection, in the page and inside same-origin form iframes (`iframe.hs-form-iframe`)
 
 ### Marketo form detection
 
@@ -94,7 +94,7 @@ Create HubSpot contact properties with these internal names:
 
 Then add each property as a hidden field on your form.
 
-The snippet handles both V4 forms (via API) and legacy forms (via DOM).
+The snippet handles both V4 forms (via API) and legacy forms (via DOM), including legacy forms embedded in an iframe.
 
 **Marketo**
 
@@ -154,7 +154,7 @@ All settings are in the **CONFIGURATION** section at the top of each snippet (ab
 
 | Variable | Purpose |
 |----------|---------|
-| `expirationDays` | Cookie expiration in days (default: 7) |
+| `expirationDays` | Cookie expiration in days (default: 0 = session cookie) |
 | `utmFieldMap` | Maps URL params to form field names |
 | `referrerField` | Form field name for referrer URL |
 | `cookieFieldMap` | Maps browser cookies to form field names |
@@ -171,7 +171,7 @@ All settings are in the **CONFIGURATION** section at the top of each snippet (ab
 
 * **Name**: `utmData`
 * **Scope**: First‑party. Domain and path follow your page context.
-* **Lifetime**: 7 days by default. Change `expirationDays` in the snippet to adjust.
+* **Lifetime**: session-only by default (`expirationDays = 0`). Change `expirationDays` in the snippet to adjust.
 * **Contents**: JSON-encoded object with UTM parameters and referrer.
 
 > Treat cookies carrying marketing attribution as personal data in many jurisdictions. See **Privacy & compliance**.

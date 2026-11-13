@@ -26,9 +26,9 @@ This repository contains standalone JavaScript snippets that capture UTM paramet
 ### HubSpot snippet
 - Handles both V4 and legacy HubSpot forms independently
 - **V4 forms**: Uses `HubSpotFormsV4.getForms()` for existing forms + `hs-form-event:on-ready` listener for future forms. Populates via `form.setFieldValue()`. Field names use format `namespace/fieldname`.
-- **Legacy forms**: Direct DOM input selection for existing forms + `message` event listener for `hsFormCallback` events for future forms
+- **Legacy forms**: Direct DOM input selection for existing forms + `message` event listener for `hsFormCallback` events for future forms. Searches the page and any same-origin `iframe.hs-form-iframe` (iframe embeds render the form inside one); the `onFormReady` form ID is matched by `data-form-id` or `hsForm_<id>`, falling back to a page-wide search
 - Hybrid approach handles GTM's async loading (forms may already exist or load later)
-- Default cookie expiration: 7 days
+- Default cookie expiration: 0 (session cookie)
 
 ### Marketo snippet
 - Uses load event listener to detect when `MktoForms2` is available
@@ -40,7 +40,7 @@ This repository contains standalone JavaScript snippets that capture UTM paramet
 
 All configuration is in the top section of each snippet (above "DO NOT MODIFY BELOW THIS LINE"):
 
-- **`expirationDays`**: Cookie expiration in days (default: 7)
+- **`expirationDays`**: Cookie expiration in days (HubSpot default: 0 = session cookie; Marketo `.js`: 7)
 - **`utmFieldMap`**: Maps URL parameters to form field names
 - **`referrerField`**: Form field name for the referrer URL
 - **`cookieFieldMap`**: Maps browser cookies (ad platform IDs) to form field names. Set value to `null` to disable.

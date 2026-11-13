@@ -3,8 +3,9 @@
 	// CONFIGURATION - Modify settings in this section
 	// =====================================================================
 
-	// Cookie expiration in days
-	var expirationDays = 7;
+	// Cookie expiration in days: defaults to 0 for session-only tracking with no 
+	// retention across sessions.
+	var expirationDays = 0;
 
 	// UTM parameters to capture from URL and their corresponding form field names
 	// Format: { 'url_param': 'form_field_name' }
@@ -192,17 +193,47 @@
 		});
 	}
 
-	// Populate legacy form via DOM
-	function populateLegacyForm(formEl) {
+	// Documents to search for legacy forms: the page, plus any same-origin
+	// HubSpot form iframes (iframe embeds render the form inside one)
+	function getLegacyDocs() {
+		var docs = [document];
+		var frames = document.querySelectorAll('iframe.hs-form-iframe');
+		for (var i = 0; i < frames.length; i++) {
+			try {
+				if (frames[i].contentDocument) docs.push(frames[i].contentDocument);
+			} catch (e) { /* cross-origin iframe: skip */ }
+		}
+		return docs;
+	}
+
+	// Find a legacy form element by form ID, in the page or a form iframe
+	function findLegacyForms(formId) {
+		var selector = 'form[data-form-id="' + formId + '"], form[id^="hsForm_' + formId + '"]';
+		var forms = [];
+		getLegacyDocs().forEach(function (doc) {
+			var found = doc.querySelectorAll(selector);
+			for (var i = 0; i < found.length; i++) forms.push(found[i]);
+		});
+		return forms;
+	}
+
+	// Populate legacy form via DOM. With a form ID, fills that form; without one
+	// (or if it isn't found), searches the page and every form iframe.
+	function populateLegacyForm(formId) {
 		var fieldData = getAllFieldData();
 		if (!fieldData || Object.keys(fieldData).length === 0) return;
 
+		var scopes = formId ? findLegacyForms(formId) : [];
+		if (scopes.length === 0) scopes = getLegacyDocs();
+
 		var fields = getAllFieldNames();
-		fields.forEach(function (fieldName) {
-			var input = formEl ? formEl.querySelector("input[name='" + fieldName + "']") : document.querySelector("input[name='" + fieldName + "']");
-			if (input && fieldData[fieldName]) {
-				input.value = fieldData[fieldName];
-			}
+		scopes.forEach(function (scope) {
+			fields.forEach(function (fieldName) {
+				var input = scope.querySelector("input[name='" + fieldName + "']");
+				if (input && fieldData[fieldName]) {
+					input.value = fieldData[fieldName];
+				}
+			});
 		});
 	}
 
@@ -224,10 +255,8 @@
 	// Legacy Forms: Handle existing forms and listen for future forms
 	populateLegacyForm(null);
 	window.addEventListener('message', function (event) {
-		if (event.data.type === 'hsFormCallback' && event.data.eventName === 'onFormReady') {
-			var formId = event.data.id;
-			var formEl = document.querySelector('form[data-form-id="' + formId + '"]');
-			populateLegacyForm(formEl);
+		if (event.data && event.data.type === 'hsFormCallback' && event.data.eventName === 'onFormReady') {
+			populateLegacyForm(event.data.id);
 		}
 	});
 })();
