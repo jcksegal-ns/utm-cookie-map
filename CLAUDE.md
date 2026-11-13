@@ -34,13 +34,13 @@ This repository contains standalone JavaScript snippets that capture UTM paramet
 - Uses load event listener to detect when `MktoForms2` is available
 - `MktoForms2.whenReady()` handles both existing and future forms
 - Populates fields via `form.vals()` with Salesforce-style field names (e.g., `UTM_Campaign__c`)
-- Default cookie expiration: 7 days
+- Default cookie expiration: 0 (session cookie)
 
 ## Customization Points
 
 All configuration is in the top section of each snippet (above "DO NOT MODIFY BELOW THIS LINE"):
 
-- **`expirationDays`**: Cookie expiration in days (HubSpot default: 0 = session cookie; Marketo `.js`: 7)
+- **`expirationDays`**: Cookie expiration in days (default: 0 = session cookie)
 - **`utmFieldMap`**: Maps URL parameters to form field names
 - **`referrerField`**: Form field name for the referrer URL
 - **`cookieFieldMap`**: Maps browser cookies (ad platform IDs) to form field names. Set value to `null` to disable.
